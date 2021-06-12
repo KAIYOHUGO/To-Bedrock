@@ -1,0 +1,18 @@
+{
+  "format_version": 2,
+  "header": {
+    "description": "translate tool made by kaiyo hugo",
+    "name": "better bedrock translate Resource Pack",
+    "uuid": "66c6e9a8-3093-462a-9c36-dbb052165623",
+    "version": [0, 0, 1],
+    "min_engine_version": [1, 17, 0]
+  },
+  "modules": [
+    {
+      "description": "translate pack",
+      "type": "resources",
+      "uuid": "743f6949-53be-44b6-b326-398005028623",
+      "version": [0, 0, 1]
+    }
+  ]
+}
