@@ -2,14 +2,13 @@ package main
 
 import (
 	"archive/zip"
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 )
 
-func addon(langName string, engineVersion []int64, langKeyValue []string) error {
+func packAddon(langName string, engineVersion []int64, langKeyValue map[string]string) error {
 	f, err := os.Create(fmt.Sprintf("./tobedrocktranslate_%s.mcpack", langName))
 	if err != nil {
 		return err
@@ -69,28 +68,9 @@ func addon(langName string, engineVersion []int64, langKeyValue []string) error 
 		if err != nil {
 			return err
 		}
-		w := bufio.NewWriter(lang)
-		for _, i := range langKeyValue {
-			w.WriteString(i)
-		}
-		if err := w.Flush(); err != nil {
-			return err
+		for k, v := range langKeyValue {
+			fmt.Fprintf(lang, "%s=%s\n", k, v)
 		}
 	}
 	return nil
-}
-
-// return java-key:bedrock-key key value
-func javaBedrockKeyValue(java, bedrock map[string]string) map[string]string {
-	word, KeyValue := make(map[string]string), make(map[string]string)
-	for k, v := range java {
-		word[v] = k
-	}
-	for k, v := range bedrock {
-		javaKey, ok := word[v]
-		if ok {
-			KeyValue[k] = javaKey
-		}
-	}
-	return KeyValue
 }

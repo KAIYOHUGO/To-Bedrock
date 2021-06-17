@@ -3,7 +3,6 @@ package main
 import (
 	"embed"
 	"encoding/json"
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -14,8 +13,9 @@ var fs embed.FS
 
 func main() {
 	var (
-		lang                        int
-		version, j_e, j_c, b_e, b_c string
+		lang int
+		// javaKey & translate is java json file,bedrockKey & compose is bedrock lang file
+		version, javaKey, translate, bedrockKey, compose string
 	)
 
 	InputSelect(Input{
@@ -34,79 +34,81 @@ func main() {
 		{
 			Message: "input java version en_us lang file:",
 			Omit:    false,
-			Var:     &j_e,
+			Var:     &javaKey,
 		},
 		{
 			Message: "input bedrock version en_us lang file:",
 			Omit:    false,
-			Var:     &b_e,
+			Var:     &bedrockKey,
 		},
 		{
 			Message: "input java version lang file you want to translate to:",
 			Omit:    false,
-			Var:     &j_c,
+			Var:     &translate,
 		},
 		{
 			Message: "input bedrock version lang file to compose (can omit):",
 			Omit:    true,
-			Var:     &b_c,
+			Var:     &compose,
 		},
 	}...)
 
-	f_j_e, err := os.Open(j_e)
-	if err != nil {
-		panic(err)
-	}
-	m_j_e := make(map[string]string)
-	json.NewDecoder(f_j_e).Decode(&m_j_e)
-	f_j_e.Close()
-
-	// swap k-v
-	m_j_e = func() map[string]string {
-		temp := make(map[string]string)
-		for k, v := range m_j_e {
-			temp[v] = k
-		}
-		return temp
-	}()
-	f_b_e, err := os.Open(b_e)
-	if err != nil {
-		panic(err)
-	}
-	f_j_c, err := os.Open(j_c)
-	if err != nil {
-		panic(err)
-	}
-
-	var f_b_c *os.File
-	m_b_c := make(map[string]string)
-	if b_c != "" {
-		f_b_c, err = os.Open(b_c)
+	// generate bedrock:java key-value
+	bedrockJavaMap := make(map[string]string)
+	func() {
+		javaKeyFile, err := os.Open(javaKey)
 		if err != nil {
 			panic(err)
 		}
-		if m_b_c, err = parse(f_b_c); err != nil {
+		defer javaKeyFile.Close()
+		bedrockKeyFile, err := os.Open(bedrockKey)
+		if err != nil {
 			panic(err)
 		}
-	}
-
-	// the lang to
-	m_j_c := make(map[string]string)
-	json.NewDecoder(f_j_c).Decode(&m_j_c)
-	f_j_c.Close()
-	m_b_e, err := parse(f_b_e)
-	f_b_e.Close()
-	if err != nil {
-		panic(err)
-	}
-	var langKeyValue []string
-	for k, v := range m_b_e {
-		if el, ok := m_j_e[v]; ok {
-			if m_b_c[k] != m_j_c[el] {
-				langKeyValue = append(langKeyValue, fmt.Sprintf("%s=%s\n", k, m_j_c[el]))
-			}
+		defer bedrockKeyFile.Close()
+		javaMap := make(map[string]string)
+		if err := json.NewDecoder(javaKeyFile).Decode(&javaMap); err != nil {
+			panic(err)
 		}
-	}
+		bedrockMap, err := parseKeyValue(bedrockKeyFile)
+		if err != nil {
+			panic(err)
+		}
+		bedrockJavaMap = bedrockJavaKeyValue(bedrockMap, javaMap)
+	}()
+
+	translated := make(map[string]string)
+	func() {
+		translateFile, err := os.Open(translate)
+		if err != nil {
+			panic(err)
+		}
+		defer translateFile.Close()
+		translateMap := make(map[string]string)
+
+		if err := json.NewDecoder(translateFile).Decode(&translateMap); err != nil {
+			panic(err)
+		}
+		for k, v := range bedrockJavaMap {
+			translated[k] = translateMap[v]
+		}
+	}()
+
+	func() {
+		if compose == "" {
+			return
+		}
+		composeFile, err := os.Open(compose)
+		if err != nil {
+			panic(err)
+		}
+		defer composeFile.Close()
+		composeMap, err := parseKeyValue(composeFile)
+		if err != nil {
+			panic(err)
+		}
+		translated = composeKeyValue(translated, composeMap)
+	}()
 	var versionArray []int64
 	for _, v := range strings.Split(version, ".") {
 		number, err := strconv.Atoi(v)
@@ -115,7 +117,7 @@ func main() {
 		}
 		versionArray = append(versionArray, int64(number))
 	}
-	if err := addon(langlist[lang].(string), versionArray, langKeyValue); err != nil {
+	if err := packAddon(langlist[lang].(string), versionArray, translated); err != nil {
 		panic(err)
 	}
 	println("done")
