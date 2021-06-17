@@ -1,52 +1,58 @@
 package main
 
 import (
-	"bufio"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
+	"strconv"
+	"strings"
 )
 
-var rootpath string
+//go:embed assets/*
+var fs embed.FS
 
 func main() {
 	var (
-		lang, j_e, j_c, b_e, b_c string
-		err                      error
+		lang                        int
+		version, j_e, j_c, b_e, b_c string
 	)
 
-	rootpath, err = os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	rootpath = filepath.Dir(rootpath)
-lg:
-	fmt.Print("input lang type you want to translate to:")
-	fmt.Scanln(&lang)
-	if lang == "" {
-		goto lg
-	}
-je:
-	fmt.Print("input java version en_us lang file:")
-	fmt.Scanln(&j_e)
-	if j_e == "" {
-		goto je
-	}
-be:
-	fmt.Print("input bedrock version en_us lang file:")
-	fmt.Scanln(&b_e)
-	if b_e == "" {
-		goto be
-	}
-jc:
-	fmt.Print("input java version lang file you want to translate to:")
-	fmt.Scanln(&j_c)
-	if j_c == "" {
-		goto jc
-	}
-	fmt.Print("input bedrock version lang file to compose (can omit):")
-	fmt.Scanln(&b_c)
+	InputSelect(Input{
+		Message: "input lang type you want to translate to:",
+		Omit:    false,
+		Var:     &lang,
+		Select:  langlist,
+	})
+
+	InputText([]Input{
+		{
+			Message: "input version number (e.g. 1.17.0):",
+			Omit:    false,
+			Var:     &version,
+		},
+		{
+			Message: "input java version en_us lang file:",
+			Omit:    false,
+			Var:     &j_e,
+		},
+		{
+			Message: "input bedrock version en_us lang file:",
+			Omit:    false,
+			Var:     &b_e,
+		},
+		{
+			Message: "input java version lang file you want to translate to:",
+			Omit:    false,
+			Var:     &j_c,
+		},
+		{
+			Message: "input bedrock version lang file to compose (can omit):",
+			Omit:    true,
+			Var:     &b_c,
+		},
+	}...)
+
 	f_j_e, err := os.Open(j_e)
 	if err != nil {
 		panic(err)
@@ -84,12 +90,6 @@ jc:
 		}
 	}
 
-	// output file
-	o, err := os.Create(fmt.Sprintf("%s/template/texts/%s.lang", rootpath, lang))
-	if err != nil {
-		panic(err)
-	}
-
 	// the lang to
 	m_j_c := make(map[string]string)
 	json.NewDecoder(f_j_c).Decode(&m_j_c)
@@ -99,17 +99,23 @@ jc:
 	if err != nil {
 		panic(err)
 	}
-	w := bufio.NewWriter(o)
+	var langKeyValue []string
 	for k, v := range m_b_e {
 		if el, ok := m_j_e[v]; ok {
 			if m_b_c[k] != m_j_c[el] {
-				w.WriteString(fmt.Sprintf("%s=%s\n", k, m_j_c[el]))
+				langKeyValue = append(langKeyValue, fmt.Sprintf("%s=%s\n", k, m_j_c[el]))
 			}
 		}
 	}
-	w.Flush()
-	o.Close()
-	if err := addon(); err != nil {
+	var versionArray []int64
+	for _, v := range strings.Split(version, ".") {
+		number, err := strconv.Atoi(v)
+		if err != nil {
+			panic(err)
+		}
+		versionArray = append(versionArray, int64(number))
+	}
+	if err := addon(langlist[lang].(string), versionArray, langKeyValue); err != nil {
 		panic(err)
 	}
 	println("done")
