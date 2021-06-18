@@ -32,7 +32,7 @@ func InputSelect(input ...Input) {
 	retry:
 		fmt.Print(v.Message)
 		fmt.Scanln(v.Var)
-		if (v.Var == nil || *v.Var.(*int) <= 0 || *v.Var.(*int) >= len(v.Select)) && !v.Omit {
+		if (v.Var == nil || *v.Var.(*int) <= 0 || *v.Var.(*int) > len(v.Select)) && !v.Omit {
 			goto retry
 		}
 		*v.Var.(*int)--
