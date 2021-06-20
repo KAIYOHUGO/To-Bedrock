@@ -1,10 +1,17 @@
-# to bedrock
+# To Bedrock
 
 ![icon](https://i.imgur.com/yprFoFr.png)
 
 _a java version translate to bedrock translate tool_
 
 it will make bedrock version translate be the same as java version translate
+
+## Feature
+
+- Before (it in English means Thunder wand)
+    ![before](https://i.imgur.com/vuroVWW.png)
+- After (it in English means lightning rod)
+    ![after](https://i.imgur.com/vOhZgEm.png)
 
 ## How to use
 
