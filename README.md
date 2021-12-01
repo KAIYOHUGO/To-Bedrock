@@ -13,7 +13,17 @@ it will make bedrock version translate be the same as java version translate
 - After (it in English means lightning rod)
     ![after](https://i.imgur.com/vOhZgEm.png)
 
-## How to use
+## How To Use
+
+1. [check releases](https://github.com/KAIYOHUGO/to-bedrock/releases)
+2. download latest version of your language
+3. run addone file
+4. set it active in minecraft
+
+---
+# OR
+
+## Build From Source
 
 1. download tobedrock.exe from releases
 2. run it
