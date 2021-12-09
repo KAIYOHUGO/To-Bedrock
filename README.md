@@ -1,5 +1,7 @@
 # To Bedrock
 
+[![GitHub license](https://img.shields.io/github/license/KAIYOHUGO/to-bedrock?style=flat-square)](https://github.com/KAIYOHUGO/to-bedrock/blob/master/LICENSE) ![GitHub release (latest by date)](https://img.shields.io/github/v/release/kaiyohugo/to-bedrock?style=flat-square) ![MCPEDL](https://img.shields.io/badge/MCPEDL-to%20bedrock-yellowgreen?style=flat-square) ![GitHub all releases](https://img.shields.io/github/downloads/kaiyohugo/to-bedrock/total?style=flat-square) [![GitHub stars](https://img.shields.io/github/stars/KAIYOHUGO/to-bedrock?style=flat-square)](https://github.com/KAIYOHUGO/to-bedrock/stargazers)
+
 ![icon](https://i.imgur.com/yprFoFr.png)
 
 _a java version translate to bedrock translate tool_
