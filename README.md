@@ -1,21 +1,35 @@
-# To Bedrock
+<div align="center">
 
-[![GitHub license](https://img.shields.io/github/license/KAIYOHUGO/to-bedrock?style=flat-square)](https://github.com/KAIYOHUGO/to-bedrock/blob/master/LICENSE) ![GitHub release (latest by date)](https://img.shields.io/github/v/release/kaiyohugo/to-bedrock?style=flat-square) ![MCPEDL](https://img.shields.io/badge/MCPEDL-to%20bedrock-yellowgreen?style=flat-square) ![GitHub all releases](https://img.shields.io/github/downloads/kaiyohugo/to-bedrock/total?style=flat-square) [![GitHub stars](https://img.shields.io/github/stars/KAIYOHUGO/to-bedrock?style=flat-square)](https://github.com/KAIYOHUGO/to-bedrock/stargazers)
+# 🟦 To Bedrock
+
+[![GitHub license](https://img.shields.io/github/license/KAIYOHUGO/to-bedrock?style=flat-square)](https://github.com/KAIYOHUGO/to-bedrock/blob/master/LICENSE) [![GitHub release (latest by date)](https://img.shields.io/github/v/release/kaiyohugo/to-bedrock?style=flat-square)](https://github.com/KAIYOHUGO/to-bedrock/releases) [![MCPEDL](https://img.shields.io/badge/MCPEDL-to%20bedrock-yellowgreen?style=flat-square)](https://mcpedl.com/java-translation-for-bedrock/) [![GitHub all releases](https://img.shields.io/github/downloads/kaiyohugo/to-bedrock/total?style=flat-square)](https://hanadigital.github.io/grev/?user=KAIYOHUGO&repo=to-bedrock) [![GitHub stars](https://img.shields.io/github/stars/KAIYOHUGO/to-bedrock?style=flat-square)](https://github.com/KAIYOHUGO/to-bedrock/stargazers)
+
 
 ![icon](https://i.imgur.com/yprFoFr.png)
 
-_a java version translate to bedrock translate tool_
+_java translation for bedrock_
 
-it will make bedrock version translate be the same as java version translate
+</div>
 
-## Feature
+---
 
-- Before (it in English means Thunder wand)
-    ![before](https://i.imgur.com/vuroVWW.png)
-- After (it in English means lightning rod)
-    ![after](https://i.imgur.com/vOhZgEm.png)
+<div align="center">
 
-## How To Use
+# ✨ Feature
+
+</div>
+
+this is a tool that will make bedrock version translate be the same as java version translate
+
+Before (it in English means Thunder wand) | After (it in English means lightning rod)
+-|-
+![before](markdown/before.png) | ![after](markdown/after.png)
+
+<div align="center">
+
+# ❓ How To Use
+
+</div>
 
 1. [check releases](https://github.com/KAIYOHUGO/to-bedrock/releases)
 2. download latest version of your language
@@ -23,16 +37,22 @@ it will make bedrock version translate be the same as java version translate
 4. set it active in minecraft
 
 ---
-# OR
+
+<div align="center">
+
+# 🔨 Build
+
+</div>
+
+1. Download tobedrock.exe from releases or [Build From Source](#Build-From-Source)
+2. Run it
+3. [Follow step print on the screen](#Example)
+
+<div align="center">
 
 ## Build From Source
 
-1. download tobedrock.exe from releases
-2. run it
-3. follow step print in the screen
-4. open betterbedrocktranslate.mcpack
-
-## Build from src
+</div>
 
 ```bash
 # build file
@@ -45,14 +65,21 @@ go build .
 tobedrock.exe
 ```
 
+<div align="center">
+
 ## Example
+
+</div>
+
 ```bash
 # auto mode
+# auto mode require java edition
 $ tobedrock.exe
 
 ( 1 ): true
 ( 2 ): false
 choice build mode (auto mode?):1
+# you need install this version in java edition 
 input version number (e.g. 1.17.0):1.17.0
 minecraft path https://minecraft.fandom.com/wiki/.minecraft/path:C:\Users\kymcm\AppData\Roaming\.minecraft
 done ...
@@ -103,4 +130,18 @@ done zh_TW
 all done, exit
 ```
 
-<div>java icons made by <a href="https://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+<div align="center">
+
+# ⭐ Stargazers
+
+</div>
+
+<div align="center">
+
+Thanks All Your Guys! 
+
+[![Stargazers repo roster for @KAIYOHUGO/to-bedrock](https://reporoster.com/stars/dark/KAIYOHUGO/to-bedrock)](https://github.com/KAIYOHUGO/to-bedrock/stargazers)
+
+</div>
+
+java icons made by [Freepik](https://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/)
