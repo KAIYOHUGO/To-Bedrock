@@ -31,12 +31,14 @@ Before (it in English means Thunder wand) | After (it in English means lightning
 
 </div>
 
-1. [Go to latest releases](https://github.com/KAIYOHUGO/to-bedrock/releases/latest)
+1. Go to [latest releases](https://github.com/KAIYOHUGO/to-bedrock/releases/latest)
 2. Download latest version of your language (tobedrocktranslate_{{language ID}}.mcpack)
+    ![image](https://user-images.githubusercontent.com/41114603/194691308-1d3e623a-21c9-4d92-988e-6c81befe1616.png)
 3. Execute addone file
 4. Make it active in minecraft
 
 Don't know what is your Language ID? [Click Here](https://minecraft.fandom.com/wiki/Language)
+
 
 ---
 
