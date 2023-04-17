@@ -1,3 +1,8 @@
 *.mcpack
 *.exe
 dist
+.vscode
+
+# Added by cargo
+
+/target

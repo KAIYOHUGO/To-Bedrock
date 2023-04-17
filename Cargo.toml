@@ -1,0 +1,43 @@
+[package]
+name = "to-bedrock"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.70"
+serde_json = "1.0.94"
+bytes = "1.4.0"
+octocrab = "0.19.0"
+base64 = "0.21.0"
+
+[dependencies.clap]
+version = "4.1.11"
+features = ["derive"]
+
+[dependencies.zip]
+version = "0.6.4"
+default-features = false
+features = ["deflate"]
+
+[dependencies.tokio]
+version = "1.26.0"
+features = ["fs", "macros", "macros", "parking_lot", "rt-multi-thread"]
+
+[dependencies.serde]
+version = "1.0.157"
+features = ["derive"]
+
+[dependencies.reqwest]
+version = "0.11.14"
+features = ["json", "stream"]
+
+[dependencies.tokio-util]
+version = "0.7.7"
+features = ["io", "io-util"]
+
+
+[dependencies.tokio-stream]
+version = "0.1.12"
+default-features = false
