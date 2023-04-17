@@ -7,7 +7,7 @@ mod generate;
 mod pack;
 mod parse;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use api::get;
 use clap::Parser;
 use generate::gen_output;
@@ -56,6 +56,10 @@ struct RawCmd {
     /// output folder path
     #[arg(short, long)]
     output: PathBuf,
+
+    /// pack (addon) version e.g. `1.19.0`
+    #[arg(short, long)]
+    pack_version: String,
 }
 
 #[tokio::main]
@@ -71,7 +75,7 @@ async fn main() -> Result<()> {
 
 async fn auto_cmd(cmd: AutoCmd) -> Result<()> {
     let bedrock_version = cmd.bedrock.unwrap_or_else(|| cmd.java.clone());
-    let java_version = api::Id(cmd.java);
+    let java_version = api::Id(cmd.java.clone());
 
     let java = async move {
         let manifest = api::get_version_manifest().await?;
@@ -165,8 +169,13 @@ async fn auto_cmd(cmd: AutoCmd) -> Result<()> {
             else => break,
         };
     }
-
-    gen_output(java_texts, bedrock_texts, cmd.output).await
+    gen_output(
+        java_texts,
+        bedrock_texts,
+        parse_version(cmd.java)?,
+        cmd.output,
+    )
+    .await
 }
 
 async fn raw_cmd(cmd: RawCmd) -> Result<()> {
@@ -227,7 +236,23 @@ async fn raw_cmd(cmd: RawCmd) -> Result<()> {
     let java_texts = java_texts?;
     let bedrock_texts = bedrock_texts?;
 
-    gen_output(java_texts, bedrock_texts, cmd.output).await
+    gen_output(
+        java_texts,
+        bedrock_texts,
+        parse_version(cmd.pack_version)?,
+        cmd.output,
+    )
+    .await
+}
+
+fn parse_version(version: String) -> Result<[u8; 3]> {
+    let vec = version
+        .split('.')
+        .map(|x| x.parse())
+        .collect::<Result<Vec<u8>, _>>()?;
+    Ok(vec
+        .try_into()
+        .map_err(|_| anyhow!("Version Format Error"))?)
 }
 
 #[cfg(test)]

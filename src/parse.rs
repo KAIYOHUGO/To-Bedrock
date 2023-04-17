@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use std::{
     collections::HashMap,
-    io::{Cursor, Read},
+    io::{Cursor, Read, Write},
 };
 use tokio::io::{self, AsyncBufRead, AsyncBufReadExt, AsyncReadExt, AsyncWriteExt};
 use zip::ZipArchive;
@@ -48,6 +48,13 @@ pub async fn des_bedrock(reader: impl AsyncBufReadExt + Unpin) -> Result<Transla
 pub async fn ser_bedrock(writer: &mut (impl AsyncWriteExt + Unpin), kv: TranslateKV) -> Result<()> {
     for (k, v) in kv {
         writer.write_all(format!("{k}={v}\n").as_bytes()).await?;
+    }
+    Ok(())
+}
+
+pub fn sync_ser_bedrock(writer: &mut impl Write, kv: TranslateKV) -> Result<()> {
+    for (k, v) in kv {
+        writeln!(writer, "{k}={v}")?;
     }
     Ok(())
 }
