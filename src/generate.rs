@@ -1,12 +1,11 @@
-use std::{collections::HashMap, io::Write, path::PathBuf, sync::Arc};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use crate::{
     pack::{pack_addon, Header, Manifest, Module},
-    parse::{ser_bedrock, TranslateKV},
+    parse::TranslateKV,
 };
 use anyhow::{anyhow, Result};
-use tokio::{fs, task};
-use tokio_util::io::SyncIoBridge;
+use tokio::task;
 
 /// output is `Map<bedrock_id,java_id>`
 pub fn gen_bedrock_java_id_map(mut bedrock: TranslateKV, java: TranslateKV) -> TranslateKV {

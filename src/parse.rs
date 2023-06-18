@@ -3,7 +3,7 @@ use std::{
     collections::HashMap,
     io::{Cursor, Read, Write},
 };
-use tokio::io::{self, AsyncBufRead, AsyncBufReadExt, AsyncReadExt, AsyncWriteExt};
+use tokio::io::{AsyncBufRead, AsyncBufReadExt, AsyncReadExt};
 use zip::ZipArchive;
 
 pub type TranslateKV = HashMap<String, String>;
@@ -22,14 +22,14 @@ pub async fn des_bedrock(reader: impl AsyncBufReadExt + Unpin) -> Result<Transla
     let mut lines = reader.lines();
 
     while let Some(line) = lines.next_line().await? {
-        let text = if let Some((text, _comment)) = line.split_once("#") {
+        let text = if let Some((text, _comment)) = line.split_once('#') {
             text
         } else {
             &line
         };
         // ignore BOM
         let text = text
-            .trim_start_matches("\u{feff}")
+            .trim_start_matches('\u{feff}')
             .trim_start()
             .trim_end_matches('\t');
         if text.is_empty() {
@@ -43,13 +43,6 @@ pub async fn des_bedrock(reader: impl AsyncBufReadExt + Unpin) -> Result<Transla
         kv.insert(k.to_owned(), v.to_owned());
     }
     Ok(kv)
-}
-
-pub async fn ser_bedrock(writer: &mut (impl AsyncWriteExt + Unpin), kv: TranslateKV) -> Result<()> {
-    for (k, v) in kv {
-        writer.write_all(format!("{k}={v}\n").as_bytes()).await?;
-    }
-    Ok(())
 }
 
 pub fn sync_ser_bedrock(writer: &mut impl Write, kv: TranslateKV) -> Result<()> {

@@ -23,7 +23,7 @@ pub async fn fetch(
         .send()
         .await?;
     for i in page.items {
-        let Some((lang_id,ext))=i.name.split_once(".") else {
+        let Some((lang_id,ext))=i.name.split_once('.') else {
                 continue;
             };
         if ext != "lang" {

@@ -9,15 +9,14 @@ mod generate;
 mod pack;
 mod parse;
 
-use anyhow::{anyhow, Context, Result};
-use api::get;
+use anyhow::{anyhow, Result};
+
 use clap::Parser;
 use generate::gen_output;
-use octocrab::params::repos::Reference;
-use parse::{des_bedrock, des_en_us_from_java, des_java};
+
+use parse::{des_bedrock, des_java};
 use std::{collections::HashMap, path::PathBuf};
-use tokio::{fs, io, select, spawn, task, try_join};
-use tokio_util::io::SyncIoBridge;
+use tokio::{fs, io, task, try_join};
 
 #[derive(Debug, Clone, Parser)]
 struct Cli {
@@ -176,14 +175,11 @@ fn parse_version(version: String) -> Result<[u8; 3]> {
     while ret.len() < 3 {
         ret.push(0);
     }
-    Ok(ret
-        .try_into()
-        .map_err(|_| anyhow!("Version Format Error"))?)
+    ret.try_into().map_err(|_| anyhow!("Version Format Error"))
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[tokio::test]
     async fn test_name() {
