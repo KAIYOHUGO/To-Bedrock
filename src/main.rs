@@ -3,6 +3,8 @@
 //! https://gist.github.com/skyrising/95a8e6a7287634e097ecafa2f21c240f
 
 mod api;
+mod fetch_bedrock;
+mod fetch_java;
 mod generate;
 mod pack;
 mod parse;
@@ -14,7 +16,7 @@ use generate::gen_output;
 use octocrab::params::repos::Reference;
 use parse::{des_bedrock, des_en_us_from_java, des_java};
 use std::{collections::HashMap, path::PathBuf};
-use tokio::{fs, io, select, task, try_join};
+use tokio::{fs, io, select, spawn, task, try_join};
 use tokio_util::io::SyncIoBridge;
 
 #[derive(Debug, Clone, Parser)]
@@ -75,100 +77,21 @@ async fn main() -> Result<()> {
 
 async fn auto_cmd(cmd: AutoCmd) -> Result<()> {
     let bedrock_version = cmd.bedrock.unwrap_or_else(|| cmd.java.clone());
-    let java_version = api::Id(cmd.java.clone());
 
-    let java = async move {
+    let java_package = {
+        let java_version = api::Id(cmd.java.clone());
         let manifest = api::get_version_manifest().await?;
         let version = manifest
             .versions
             .into_iter()
             .find(|version| version.id == java_version)
             .ok_or_else(|| anyhow!("Cannot find version `{}`", &java_version.0))?;
-        let package = version.url.get().await?;
-        let mut set = task::JoinSet::new();
-
-        set.spawn(async move {
-            let java = package.downloads.client.url.get().await?;
-            let kv = des_en_us_from_java(java, Some(package.downloads.client.size)).await?;
-            dbg!("en_us");
-            anyhow::Ok(("en_us".into(), kv))
-        });
-
-        let assets = package.asset_index.url.get().await?;
-        let iter = assets
-            .objects
-            .into_iter()
-            .filter(|(path, _)| path.starts_with("minecraft/lang/"))
-            .map(|(path, obj)| {
-                (
-                    path.trim_start_matches("minecraft/lang/")
-                        .trim_end_matches(".json")
-                        .into(),
-                    obj,
-                )
-            });
-
-        for (lang_id, obj) in iter {
-            set.spawn(async move {
-                let reader = obj.url().get().await?;
-                let kv =
-                    task::spawn_blocking(move || des_java(SyncIoBridge::new(reader))).await??;
-                dbg!(&lang_id);
-                anyhow::Ok((lang_id, kv))
-            });
-        }
-
-        anyhow::Ok(set)
-    };
-    let bedrock = async move {
-        let mut set = task::JoinSet::new();
-        let octocrab = octocrab::instance();
-        let page = octocrab
-            .repos("Mojang", "bedrock-samples")
-            .get_content()
-            .path("resource_pack/texts")
-            .r#ref(format!("v{}", bedrock_version))
-            .send()
-            .await?;
-        for i in page.items {
-            let Some((lang_id,ext))=i.name.split_once(".") else {
-                continue;
-            };
-            if ext != "lang" {
-                continue;
-            }
-            let Some(url) = i.download_url else {
-                continue;
-            };
-            let lang_id = lang_id.to_lowercase();
-            set.spawn(async move {
-                dbg!(&lang_id);
-                let content = get(url).await?;
-                let kv = des_bedrock(content).await?;
-                anyhow::Ok((lang_id, kv))
-            });
-        }
-
-        anyhow::Ok(set)
+        version.url.get().await?
     };
 
-    let (java_set, bedrock_set) = try_join!(task::spawn(java), task::spawn(bedrock))?;
-    let (mut java_set, mut bedrock_set) = (java_set?, bedrock_set?);
+    let java_texts = fetch_java::fetch(java_package, 5.try_into()?).await?;
+    let bedrock_texts = fetch_bedrock::fetch(bedrock_version, 10.try_into()?).await?;
 
-    let (mut java_texts, mut bedrock_texts) = (HashMap::new(), HashMap::new());
-    loop {
-        select! {
-            Some(r) = java_set.join_next() => {
-                let (lang_id, kv) = r??;
-                java_texts.insert(lang_id, kv);
-            }
-            Some(r) = bedrock_set.join_next() => {
-                let (lang_id, kv) = r??;
-                bedrock_texts.insert(lang_id, kv);
-            }
-            else => break,
-        };
-    }
     gen_output(
         java_texts,
         bedrock_texts,
@@ -246,11 +169,14 @@ async fn raw_cmd(cmd: RawCmd) -> Result<()> {
 }
 
 fn parse_version(version: String) -> Result<[u8; 3]> {
-    let vec = version
+    let mut ret = version
         .split('.')
         .map(|x| x.parse())
         .collect::<Result<Vec<u8>, _>>()?;
-    Ok(vec
+    while ret.len() < 3 {
+        ret.push(0);
+    }
+    Ok(ret
         .try_into()
         .map_err(|_| anyhow!("Version Format Error"))?)
 }
