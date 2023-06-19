@@ -38,8 +38,8 @@ Before (it in English means Thunder wand) | After (it in English means lightning
 
 1. Go to [latest releases](https://github.com/KAIYOHUGO/to-bedrock/releases/latest/)
 2. Download To_Bedrock.mcpack
-    ![image](https://user-images.githubusercontent.com/41114603/194691308-1d3e623a-21c9-4d92-988e-6c81befe1616.png)
 3. Execute addone file
+    ![release page](https://github.com/KAIYOHUGO/To-Bedrock/assets/41114603/d0057088-da13-4e46-8b17-cbd64fcd1470)
 4. Make it active in minecraft
 
 <div align="center">
@@ -47,7 +47,6 @@ Before (it in English means Thunder wand) | After (it in English means lightning
 # Support Language
 
 🧪: Experiment, ✅: Supported
-</div>
 
 Lang ID|Lang Name|Support State
 -|:-:|:-:
@@ -179,33 +178,24 @@ Lang ID|Lang Name|Support State
 |zh_TW|繁體中文 (台灣)|✅|
 |zlm_ARAB|بهاس ملايو (مليسيا)|🧪|
 
+</div>
+
 ---
 
 <div align="center">
 
 # 🔨 Build
 
-</div>
-
-1. Download tobedrock.exe from releases or [Build From Source](#Build-From-Source)
-2. Run it
-3. [Follow step print on the screen](#Example)
-
-<div align="center">
-
 ## Build From Source
 
 </div>
 
 ```bash
-# build file
-go build .
+# run only
+cargo run -- {arg go here}
 
-# run it
-./tobedrock
-
-# or
-tobedrock.exe
+# or build it
+cargo build
 ```
 
 <div align="center">
