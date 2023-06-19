@@ -9,15 +9,18 @@ mod generate;
 mod pack;
 mod parse;
 
-use anyhow::{anyhow, Context, Result};
-use api::get;
+use anyhow::{anyhow, Result};
+
 use clap::Parser;
 use generate::gen_output;
-use octocrab::params::repos::Reference;
-use parse::{des_bedrock, des_en_us_from_java, des_java};
-use std::{collections::HashMap, path::PathBuf};
-use tokio::{fs, io, select, spawn, task, try_join};
-use tokio_util::io::SyncIoBridge;
+
+use parse::{des_bedrock, des_java};
+use std::{collections::HashMap, io::BufWriter, path::PathBuf};
+use tokio::{
+    fs, io,
+    task::{self, spawn_blocking},
+    try_join,
+};
 
 #[derive(Debug, Clone, Parser)]
 struct Cli {
@@ -36,6 +39,7 @@ struct AutoCmd {
     /// java version
     #[arg(short, long)]
     java: String,
+
     /// bedrock version
     #[arg(short, long)]
     bedrock: Option<String>,
@@ -43,6 +47,10 @@ struct AutoCmd {
     /// output folder path
     #[arg(short, long)]
     output: PathBuf,
+
+    /// emit bedrock java id map
+    #[arg(long)]
+    emit_map: bool,
 }
 
 #[derive(Debug, Clone, clap::Args)]
@@ -62,6 +70,10 @@ struct RawCmd {
     /// pack (addon) version e.g. `1.19.0`
     #[arg(short, long)]
     pack_version: String,
+
+    /// emit bedrock java id map
+    #[arg(long)]
+    emit_map: bool,
 }
 
 #[tokio::main]
@@ -89,16 +101,25 @@ async fn auto_cmd(cmd: AutoCmd) -> Result<()> {
         version.url.get().await?
     };
 
-    let java_texts = fetch_java::fetch(java_package, 5.try_into()?).await?;
+    let java_texts = fetch_java::fetch(java_package, 10.try_into()?).await?;
     let bedrock_texts = fetch_bedrock::fetch(bedrock_version, 10.try_into()?).await?;
 
-    gen_output(
+    let bedrock_java_id_map = gen_output(
         java_texts,
         bedrock_texts,
         parse_version(cmd.java)?,
-        cmd.output,
+        &cmd.output,
     )
-    .await
+    .await?;
+    if cmd.emit_map {
+        spawn_blocking(move || {
+            let file = BufWriter::new(std::fs::File::create(cmd.output.join("map.json"))?);
+            serde_json::to_writer(file, &bedrock_java_id_map)?;
+            anyhow::Ok(())
+        })
+        .await??;
+    }
+    Ok(())
 }
 
 async fn raw_cmd(cmd: RawCmd) -> Result<()> {
@@ -159,13 +180,22 @@ async fn raw_cmd(cmd: RawCmd) -> Result<()> {
     let java_texts = java_texts?;
     let bedrock_texts = bedrock_texts?;
 
-    gen_output(
+    let bedrock_java_id_map = gen_output(
         java_texts,
         bedrock_texts,
         parse_version(cmd.pack_version)?,
-        cmd.output,
+        &cmd.output,
     )
-    .await
+    .await?;
+    if cmd.emit_map {
+        spawn_blocking(move || {
+            let file = BufWriter::new(std::fs::File::create(cmd.output.join("map.json"))?);
+            serde_json::to_writer(file, &bedrock_java_id_map)?;
+            anyhow::Ok(())
+        })
+        .await??;
+    }
+    Ok(())
 }
 
 fn parse_version(version: String) -> Result<[u8; 3]> {
@@ -176,14 +206,11 @@ fn parse_version(version: String) -> Result<[u8; 3]> {
     while ret.len() < 3 {
         ret.push(0);
     }
-    Ok(ret
-        .try_into()
-        .map_err(|_| anyhow!("Version Format Error"))?)
+    ret.try_into().map_err(|_| anyhow!("Version Format Error"))
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[tokio::test]
     async fn test_name() {
