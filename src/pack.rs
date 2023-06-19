@@ -1,6 +1,6 @@
 use anyhow::Result;
 use serde::Serialize;
-use std::{io::Write, path::Path, sync::Arc};
+use std::{io::Write, path::Path};
 use zip::{write::FileOptions, ZipWriter};
 
 use crate::parse::{sync_ser_bedrock, TranslateKV};
@@ -29,11 +29,16 @@ pub struct Module {
     pub version: [u8; 3],
 }
 
+pub struct LangInfo {
+    pub id: String,
+    pub name: String,
+    pub texts: TranslateKV,
+}
+
 pub fn pack_addon(
     path: impl AsRef<Path>,
-    lang_id: String,
-    text: TranslateKV,
-    manifest: Arc<Manifest>,
+    lang_info_list: Vec<LangInfo>,
+    manifest: Manifest,
 ) -> Result<()> {
     let mut file = ZipWriter::new(std::fs::File::create(path)?);
     let option = FileOptions::default().compression_level(Some(9));
@@ -42,10 +47,23 @@ pub fn pack_addon(
     file.write_all(include_bytes!("../assets/pack_icon.png"))?;
 
     file.start_file("manifest.json", option)?;
-    serde_json::to_writer(&mut file, &*manifest)?;
+    serde_json::to_writer(&mut file, &manifest)?;
 
-    file.start_file(format!("texts/{}.lang", lang_id), option)?;
-    sync_ser_bedrock(&mut file, text)?;
+    let mut lang_id_list = vec![];
+    let mut lang_name_list = vec![];
+    for LangInfo { id, name, texts } in &lang_info_list {
+        lang_id_list.push(id);
+        lang_name_list.push([id, name]);
+
+        file.start_file(format!("texts/{}.lang", &id), option)?;
+        sync_ser_bedrock(&mut file, texts)?;
+    }
+
+    file.start_file("texts/languages.json", option)?;
+    serde_json::to_writer(&mut file, &lang_id_list)?;
+
+    file.start_file("texts/language_names.json", option)?;
+    serde_json::to_writer(&mut file, &lang_name_list)?;
 
     file.finish()?;
     Ok(())

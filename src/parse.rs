@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use std::{
     collections::HashMap,
     io::{Cursor, Read, Write},
@@ -22,30 +22,22 @@ pub async fn des_bedrock(reader: impl AsyncBufReadExt + Unpin) -> Result<Transla
     let mut lines = reader.lines();
 
     while let Some(line) = lines.next_line().await? {
-        let text = if let Some((text, _comment)) = line.split_once('#') {
+        let text = if let Some((text, _comment)) = line.split_once("##") {
             text
         } else {
             &line
         };
         // ignore BOM
-        let text = text
-            .trim_start_matches('\u{feff}')
-            .trim_start()
-            .trim_end_matches('\t');
-        if text.is_empty() {
-            continue;
-        }
-
+        let text = text.trim_start_matches('\u{feff}').trim_end_matches("\t#");
         let Some((k,v)) = text.split_once('=') else {
-            dbg!(line);
-            return Err(anyhow!("malformed bedrock lang file, expect 'key=value'"))
+            continue;
         };
         kv.insert(k.to_owned(), v.to_owned());
     }
     Ok(kv)
 }
 
-pub fn sync_ser_bedrock(writer: &mut impl Write, kv: TranslateKV) -> Result<()> {
+pub fn sync_ser_bedrock(writer: &mut impl Write, kv: &TranslateKV) -> Result<()> {
     for (k, v) in kv {
         writeln!(writer, "{k}={v}")?;
     }
