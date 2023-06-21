@@ -1,4 +1,4 @@
-<div align="center">
+  <div align="center">
 
 # 🟦 To Bedrock
 
@@ -12,11 +12,6 @@ _java translation for bedrock_
 </div>
 
 ---
-
-
-> **Warning**
-> I am busy on prepare college entrance exam.
-> If you can't find 1.20 addon, please [Open Issue](https://github.com/KAIYOHUGO/to-bedrock/issues)
 
 <div align="center">
 
