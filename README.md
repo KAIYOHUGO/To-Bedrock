@@ -222,7 +222,7 @@ Options:
   -h, --help               Print help
 
 # generate mcpack
-$ to-bedrock auto -j 1.20 -b 1.20.0.1 -o dist
+$ to-bedrock -o dist auto -j 1.20 -b 1.20.0.1
 ```
 
 <div align="center">

@@ -14,7 +14,7 @@ use anyhow::{anyhow, Result};
 use clap::Parser;
 use generate::gen_output;
 
-use parse::{des_bedrock, des_java};
+use parse::{des_bedrock, des_java, TranslateKV};
 use std::{collections::HashMap, io::BufWriter, path::PathBuf};
 use tokio::{
     fs, io,
@@ -26,6 +26,20 @@ use tokio::{
 struct Cli {
     #[command(subcommand)]
     command: Cmd,
+
+    /// output folder path
+    #[arg(short, long)]
+    output: PathBuf,
+
+    /// Override bedrock java id map
+    /// It is useful when some mapping is wrong or missing
+    #[arg(long)]
+    override_map: Option<PathBuf>,
+
+    /// Emit bedrock java id map
+    /// It is a key (bedrock text id) value (java text id) map
+    #[arg(long)]
+    emit_map: bool,
 }
 
 #[derive(Debug, Clone, clap::Subcommand)]
@@ -43,14 +57,6 @@ struct AutoCmd {
     /// bedrock version
     #[arg(short, long)]
     bedrock: Option<String>,
-
-    /// output folder path
-    #[arg(short, long)]
-    output: PathBuf,
-
-    /// emit bedrock java id map
-    #[arg(long)]
-    emit_map: bool,
 }
 
 #[derive(Debug, Clone, clap::Args)]
@@ -63,31 +69,59 @@ struct RawCmd {
     #[arg(short, long)]
     bedrock: PathBuf,
 
-    /// output folder path
-    #[arg(short, long)]
-    output: PathBuf,
-
     /// pack (addon) version e.g. `1.19.0`
     #[arg(short, long)]
     pack_version: String,
-
-    /// emit bedrock java id map
-    #[arg(long)]
-    emit_map: bool,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let Cli { command } = Cli::parse();
+    let Cli {
+        command,
+        output,
+        override_map,
+        emit_map,
+    } = Cli::parse();
 
-    match command {
+    let cmd_output = match command {
         Cmd::Auto(cmd) => auto_cmd(cmd).await?,
         Cmd::Raw(cmd) => raw_cmd(cmd).await?,
     };
+
+    let override_map = if let Some(path) = override_map {
+        let file = fs::read(path).await?;
+        serde_json::from_reader(file.as_slice())?
+    } else {
+        TranslateKV::new()
+    };
+
+    let bedrock_java_id_map = gen_output(
+        cmd_output.java_texts,
+        cmd_output.bedrock_texts,
+        override_map,
+        cmd_output.version,
+        &output,
+    )
+    .await?;
+
+    if emit_map {
+        spawn_blocking(move || {
+            let file = BufWriter::new(std::fs::File::create(output.join("map.json"))?);
+            serde_json::to_writer(file, &bedrock_java_id_map)?;
+            anyhow::Ok(())
+        })
+        .await??;
+    }
     Ok(())
 }
 
-async fn auto_cmd(cmd: AutoCmd) -> Result<()> {
+struct CmdOutput {
+    java_texts: HashMap<String, TranslateKV>,
+    bedrock_texts: HashMap<String, TranslateKV>,
+    version: [u8; 3],
+}
+
+async fn auto_cmd(cmd: AutoCmd) -> Result<CmdOutput> {
     let bedrock_version = cmd.bedrock.unwrap_or_else(|| cmd.java.clone());
 
     let java_package = {
@@ -103,26 +137,16 @@ async fn auto_cmd(cmd: AutoCmd) -> Result<()> {
 
     let java_texts = fetch_java::fetch(java_package, 10.try_into()?).await?;
     let bedrock_texts = fetch_bedrock::fetch(bedrock_version, 10.try_into()?).await?;
+    let version = parse_version(cmd.java)?;
 
-    let bedrock_java_id_map = gen_output(
+    Ok(CmdOutput {
         java_texts,
         bedrock_texts,
-        parse_version(cmd.java)?,
-        &cmd.output,
-    )
-    .await?;
-    if cmd.emit_map {
-        spawn_blocking(move || {
-            let file = BufWriter::new(std::fs::File::create(cmd.output.join("map.json"))?);
-            serde_json::to_writer(file, &bedrock_java_id_map)?;
-            anyhow::Ok(())
-        })
-        .await??;
-    }
-    Ok(())
+        version,
+    })
 }
 
-async fn raw_cmd(cmd: RawCmd) -> Result<()> {
+async fn raw_cmd(cmd: RawCmd) -> Result<CmdOutput> {
     let java = async {
         let mut ret = HashMap::new();
         let mut dir = fs::read_dir(cmd.java).await?;
@@ -179,23 +203,13 @@ async fn raw_cmd(cmd: RawCmd) -> Result<()> {
     let (java_texts, bedrock_texts) = try_join!(task::spawn(java), task::spawn(bedrock))?;
     let java_texts = java_texts?;
     let bedrock_texts = bedrock_texts?;
+    let version = parse_version(cmd.pack_version)?;
 
-    let bedrock_java_id_map = gen_output(
+    Ok(CmdOutput {
         java_texts,
         bedrock_texts,
-        parse_version(cmd.pack_version)?,
-        &cmd.output,
-    )
-    .await?;
-    if cmd.emit_map {
-        spawn_blocking(move || {
-            let file = BufWriter::new(std::fs::File::create(cmd.output.join("map.json"))?);
-            serde_json::to_writer(file, &bedrock_java_id_map)?;
-            anyhow::Ok(())
-        })
-        .await??;
-    }
-    Ok(())
+        version,
+    })
 }
 
 fn parse_version(version: String) -> Result<[u8; 3]> {

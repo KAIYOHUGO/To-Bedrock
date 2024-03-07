@@ -8,7 +8,11 @@ use anyhow::{anyhow, Result};
 use tokio::task;
 
 /// output is `Map<bedrock_id,java_id>`
-fn gen_bedrock_java_id_map(bedrock: TranslateKV, java: TranslateKV) -> TranslateKV {
+fn gen_bedrock_java_id_map(
+    bedrock: TranslateKV,
+    java: TranslateKV,
+    override_map: TranslateKV,
+) -> TranslateKV {
     let mut java_text_id = TranslateKV::new();
     java_text_id.reserve(java.capacity());
     for (k, v) in java {
@@ -17,10 +21,18 @@ fn gen_bedrock_java_id_map(bedrock: TranslateKV, java: TranslateKV) -> Translate
 
     let mut ret = TranslateKV::new();
     for (bedrock_id, bedrock_text) in bedrock {
+        if bedrock_text.is_empty() {
+            continue;
+        }
         if let Some(java_id) = java_text_id.get(&bedrock_text).cloned() {
             ret.insert(bedrock_id, java_id);
         }
     }
+
+    for (bedrock_id, java_id) in override_map {
+        ret.insert(bedrock_id, java_id);
+    }
+
     ret
 }
 
@@ -45,14 +57,17 @@ fn gen_translate(
 pub async fn gen_output(
     mut java_texts: HashMap<String, TranslateKV>,
     mut bedrock_texts: HashMap<String, TranslateKV>,
+    override_map: TranslateKV,
     version: [u8; 3],
     output: &Path,
 ) -> Result<TranslateKV> {
-    let (Some(java_en_us),Some(bedrock_en_us))=(java_texts.remove("en_us"),bedrock_texts.remove("en_us")) else {
+    let (Some(java_en_us), Some(bedrock_en_us)) =
+        (java_texts.remove("en_us"), bedrock_texts.remove("en_us"))
+    else {
         return Err(anyhow!("en_us.json and en_us.lang file are required"));
     };
 
-    let bedrock_java_id_map = gen_bedrock_java_id_map(bedrock_en_us, java_en_us);
+    let bedrock_java_id_map = gen_bedrock_java_id_map(bedrock_en_us, java_en_us, override_map);
     let mut path = output.join(format!(
         "To_Bedrock_{}_{}_{}",
         &version[0], &version[1], &version[2]
