@@ -11,7 +11,10 @@ mod parse;
 
 use anyhow::{anyhow, Result};
 
-use clap::Parser;
+use clap::{
+    builder::{styling::AnsiColor, Styles},
+    Parser,
+};
 use generate::gen_output;
 
 use parse::{des_bedrock, des_java, TranslateKV};
@@ -23,6 +26,7 @@ use tokio::{
 };
 
 #[derive(Debug, Clone, Parser)]
+#[command(styles = clap_v3_styles())]
 struct Cli {
     #[command(subcommand)]
     command: Cmd,
@@ -72,6 +76,14 @@ struct RawCmd {
     /// pack (addon) version e.g. `1.19.0`
     #[arg(short, long)]
     pack_version: String,
+}
+
+fn clap_v3_styles() -> Styles {
+    Styles::styled()
+        .header(AnsiColor::Yellow.on_default())
+        .usage(AnsiColor::Green.on_default())
+        .literal(AnsiColor::Green.on_default())
+        .placeholder(AnsiColor::Green.on_default())
 }
 
 #[tokio::main]
