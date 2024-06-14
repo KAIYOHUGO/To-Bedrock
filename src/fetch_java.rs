@@ -18,7 +18,6 @@ pub async fn fetch(
     set.spawn(async move {
         let java = java_package.downloads.client.url.get().await?;
         let kv = des_en_us_from_java(java, Some(java_package.downloads.client.size)).await?;
-        dbg!("en_us");
         anyhow::Ok(("en_us".into(), kv))
     });
 
@@ -40,7 +39,6 @@ pub async fn fetch(
         set.spawn(async move {
             let reader = obj.url().get().await?;
             let kv = task::spawn_blocking(move || des_java(SyncIoBridge::new(reader))).await??;
-            dbg!(&lang_id);
             anyhow::Ok((lang_id, kv))
         });
 

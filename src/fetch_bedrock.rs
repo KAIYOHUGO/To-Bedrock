@@ -34,7 +34,6 @@ pub async fn fetch(
             };
         let lang_id = lang_id.to_lowercase();
         set.spawn(async move {
-            dbg!(&lang_id);
             let content = get(url).await?;
             let kv = des_bedrock(content).await?;
             anyhow::Ok((lang_id, kv))
