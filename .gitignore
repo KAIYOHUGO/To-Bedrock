@@ -1,3 +1,4 @@
+.direnv
 *.mcpack
 *.exe
 dist
