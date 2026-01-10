@@ -18,6 +18,8 @@
             cargo
             rustc
             rustPackages.clippy
+            pkg-config
+            openssl
           ];
           nativeBuildInputs = [
             rustfmt
