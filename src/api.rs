@@ -1,5 +1,5 @@
 use anyhow::Result;
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{Deserialize, de::DeserializeOwned};
 use std::{
     collections::HashMap,
     io::{Error, ErrorKind},
@@ -111,9 +111,6 @@ pub struct AssetIndex {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Downloads {
     pub client: ClientMappingsClass,
-    pub client_mappings: ClientMappingsClass,
-    pub server: ClientMappingsClass,
-    pub server_mappings: ClientMappingsClass,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
